@@ -127,3 +127,6 @@ For a production implementation, consider:
 - Enhancing document analysis with more sophisticated NLP techniques
 - Adding integration with OT scanning tools
 
+## Contact
+
+You can reach out to me via LinkedIn: www.linkedin.com/in/muath-alhayani-47650a16b
