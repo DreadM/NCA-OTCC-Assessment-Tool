@@ -130,6 +130,65 @@ body {
   color: var(--gray-800);
 }
 
+/* Facility Card Styles */
+.facility-card {
+  background-color: var(--gray-50);
+  border: 1px solid var(--gray-200);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.facility-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.facility-header h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--gray-700);
+  margin: 0;
+}
+
+.add-facility-btn {
+  display: block;
+  width: 100%;
+  margin-bottom: 2rem;
+  text-align: center;
+  padding: 0.75rem;
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  color: var(--danger-color);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+}
+
+.btn-icon:hover {
+  background-color: rgba(244, 67, 54, 0.1);
+}
+
+.btn-icon.disabled {
+  color: var(--gray-400);
+  cursor: not-allowed;
+}
+
+.btn-icon.disabled:hover {
+  background-color: transparent;
+}
+
+/* Form Group Spacing */
+.facility-card .form-group:last-child {
+  margin-bottom: 0;
+}
+
 .help-text {
   color: var(--gray-600);
   margin-bottom: 1.5rem;

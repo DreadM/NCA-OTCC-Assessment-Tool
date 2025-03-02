@@ -1,4 +1,3 @@
-// src/components/CompanyForm.js
 import React, { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CompanyContext } from '../contexts/CompanyContext';
@@ -17,7 +16,8 @@ const CompanyForm = () => {
   
   const handleSubmit = (e) => {
     e.preventDefault();
-    navigate('/documents');
+    // Navigate to facilities page instead of documents
+    navigate('/facilities');
   };
   
   return (

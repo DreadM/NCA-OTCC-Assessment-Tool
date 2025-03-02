@@ -1,4 +1,3 @@
-// src/components/Navigation.js
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -10,14 +9,16 @@ const Navigation = () => {
     switch (location.pathname) {
       case '/':
         return 1;
-      case '/documents':
+      case '/facilities':
         return 2;
-      case '/review':
+      case '/documents':
         return 3;
-      case '/processing':
+      case '/review':
         return 4;
-      case '/results':
+      case '/processing':
         return 5;
+      case '/results':
+        return 6;
       default:
         return 0;
     }
@@ -26,7 +27,7 @@ const Navigation = () => {
   const step = getStepNumber();
   
   // Don't show progress steps on results page
-  if (step === 5) {
+  if (step === 6) {
     return (
       <header className="app-header">
         <div className="logo">
@@ -53,16 +54,21 @@ const Navigation = () => {
           <div className="step-connector"></div>
           <div className={`step ${step >= 2 ? 'active' : ''}`}>
             <div className="step-number">2</div>
-            <div className="step-label">Documents</div>
+            <div className="step-label">Facilities</div>
           </div>
           <div className="step-connector"></div>
           <div className={`step ${step >= 3 ? 'active' : ''}`}>
             <div className="step-number">3</div>
-            <div className="step-label">Review</div>
+            <div className="step-label">Documents</div>
           </div>
           <div className="step-connector"></div>
           <div className={`step ${step >= 4 ? 'active' : ''}`}>
             <div className="step-number">4</div>
+            <div className="step-label">Review</div>
+          </div>
+          <div className="step-connector"></div>
+          <div className={`step ${step >= 5 ? 'active' : ''}`}>
+            <div className="step-number">5</div>
             <div className="step-label">Processing</div>
           </div>
         </div>

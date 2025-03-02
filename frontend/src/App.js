@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import CompanyForm from './components/CompanyForm';
+import FacilitiesForm from './components/FacilitiesForm'; // Add this import
 import DocumentUpload from './components/DocumentUpload';
 import ReviewSubmit from './components/ReviewSubmit';
 import ProcessingScreen from './components/ProcessingScreen';
@@ -18,6 +19,7 @@ function App() {
           <div className="content-wrapper">
             <Routes>
               <Route path="/" element={<CompanyForm />} />
+              <Route path="/facilities" element={<FacilitiesForm />} /> {/* Add this route */}
               <Route path="/documents" element={<DocumentUpload />} />
               <Route path="/review" element={<ReviewSubmit />} />
               <Route path="/processing" element={<ProcessingScreen />} />
