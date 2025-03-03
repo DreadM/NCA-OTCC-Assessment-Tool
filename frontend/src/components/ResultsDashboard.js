@@ -156,7 +156,12 @@ const ResultsDashboard = () => {
         </div>
         
         <div className="dashboard-actions">
-          <button className="btn btn-primary">Download Full Report</button>
+          <button 
+            className="btn btn-primary"
+            onClick={handleDownloadReport}
+          >
+            Download Full Report
+          </button>
           <button className="btn btn-secondary">Schedule Consultation</button>
         </div>
       </div>
@@ -170,6 +175,52 @@ const getScoreColor = (score) => {
   if (score >= 60) return '#FFC107'; // Yellow
   if (score >= 40) return '#FF9800'; // Orange
   return '#F44336'; // Red
+};
+
+// Function to download the assessment report
+const handleDownloadReport = async () => {
+  try {
+    // Get the assessment ID from localStorage
+    const assessmentId = localStorage.getItem('currentAssessmentId');
+    
+    if (!assessmentId) {
+      alert('Assessment ID not found. Cannot download report.');
+      return;
+    }
+    
+    // Call the API endpoint that generates and returns the report
+    const response = await fetch(`http://localhost:5001/api/assessment/${assessmentId}/report`, {
+      method: 'GET',
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to download report');
+    }
+    
+    // Get the blob from the response
+    const blob = await response.blob();
+    
+    // Create a URL for the blob
+    const url = window.URL.createObjectURL(blob);
+    
+    // Create a temporary link element
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `OTCC_Assessment_Report_${assessmentId}.json`;
+    
+    // Append the link to the body
+    document.body.appendChild(link);
+    
+    // Click the link to trigger the download
+    link.click();
+    
+    // Clean up
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error('Error downloading report:', error);
+    alert('Failed to download report: ' + error.message);
+  }
 };
 
 export default ResultsDashboard;

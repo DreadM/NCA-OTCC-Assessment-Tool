@@ -1,71 +1,106 @@
-// src/components/ProcessingScreen.js
-import React, { useContext, useEffect } from 'react';
+// src/components/ProcessingScreen.js - Real API connection
+import React, { useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CompanyContext } from '../contexts/CompanyContext';
 
 const ProcessingScreen = () => {
-  const { documents, processingStatus, setProcessingStatus, setAssessmentResults } = useContext(CompanyContext);
+  const { setAssessmentResults } = useContext(CompanyContext);
+  const [processingStatus, setProcessingStatus] = useState({
+    isProcessing: true,
+    progress: 0,
+    status: 'Initializing assessment...',
+    completedSteps: []
+  });
   const navigate = useNavigate();
   
-  // Simulate the assessment process
+  // Process steps for UI display
+  const [completedSteps, setCompletedSteps] = useState([]);
+  
   useEffect(() => {
-    const simulateProcessing = async () => {
-      const steps = [
-        { step: 'Validating uploaded documents', time: 2000 },
-        { step: 'Extracting text from documents', time: 3000 },
-        { step: 'Analyzing policies and procedures', time: 3500 },
-        { step: 'Evaluating cybersecurity governance', time: 2500 },
-        { step: 'Assessing defense mechanisms', time: 3000 },
-        { step: 'Analyzing resilience capabilities', time: 2000 },
-        { step: 'Evaluating third-party security', time: 2500 },
-        { step: 'Generating compliance scores', time: 2000 },
-        { step: 'Preparing recommendations', time: 3000 },
-        { step: 'Finalizing assessment report', time: 2500 }
-      ];
-      
-      let completedSteps = [];
-      
-      for (let i = 0; i < steps.length; i++) {
-        const step = steps[i];
+    const assessmentId = localStorage.getItem('currentAssessmentId');
+    
+    if (!assessmentId) {
+      console.error('No assessment ID found in localStorage');
+      return;
+    }
+    
+    console.log(`Processing assessment: ${assessmentId}`);
+    
+    const pollAssessmentStatus = async () => {
+      try {
+        const response = await fetch(`http://localhost:5001/api/assessment/${assessmentId}/status`);
         
-        // Update status to current step
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Poll status:', data);
+        
+        // Map progress to a step description
+        let currentStepText = getStepDescription(data.progress);
+        
+        // Add to completed steps if not already there
+        if (currentStepText && !completedSteps.includes(currentStepText)) {
+          const newCompletedSteps = [...completedSteps, currentStepText];
+          setCompletedSteps(newCompletedSteps);
+        }
+        
+        // Update the processing status based on backend response
         setProcessingStatus({
-          isProcessing: true,
-          progress: Math.round(((i) / steps.length) * 100),
-          status: step.step,
-          completedSteps
+          isProcessing: data.status !== 'completed',
+          progress: data.progress,
+          status: data.status === 'completed' ? 'Assessment complete!' : currentStepText,
+          completedSteps: completedSteps
         });
         
-        // Wait for the step duration
-        await new Promise(resolve => setTimeout(resolve, step.time));
-        
-        // Add to completed steps
-        completedSteps = [...completedSteps, step.step];
+        // If assessment is complete, fetch results and proceed
+        if (data.status === 'completed') {
+          const resultsResponse = await fetch(`http://localhost:5001/api/assessment/${assessmentId}/results`);
+          
+          if (!resultsResponse.ok) {
+            throw new Error(`HTTP error! status: ${resultsResponse.status}`);
+          }
+          
+          const resultsData = await resultsResponse.json();
+          setAssessmentResults(resultsData);
+          
+          // Navigate to results page
+          setTimeout(() => navigate('/results'), 1000);
+        } else {
+          // Continue polling
+          setTimeout(pollAssessmentStatus, 2000);
+        }
+      } catch (error) {
+        console.error('Error polling assessment status:', error);
+        // Continue polling even on error
+        setTimeout(pollAssessmentStatus, 3000);
       }
-      
-      // Create sample assessment results
-      const sampleResults = generateSampleResults(documents);
-      setAssessmentResults(sampleResults);
-      
-      // Complete processing
-      setProcessingStatus({
-        isProcessing: false,
-        progress: 100,
-        status: 'Assessment complete!',
-        completedSteps
-      });
-      
-      // Navigate to results page
-      navigate('/results');
     };
     
-    simulateProcessing();
+    // Start polling
+    pollAssessmentStatus();
     
     // Cleanup function
     return () => {
       // Any cleanup needed
     };
-  }, []);
+  }, [navigate, setAssessmentResults, completedSteps]);
+  
+  // Helper to map progress percentage to meaningful steps
+  const getStepDescription = (progress) => {
+    if (progress < 10) return 'Initializing assessment...';
+    if (progress < 20) return 'Validating uploaded documents';
+    if (progress < 30) return 'Extracting text from documents';
+    if (progress < 40) return 'Analyzing policies and procedures';
+    if (progress < 50) return 'Evaluating cybersecurity governance';
+    if (progress < 60) return 'Assessing defense mechanisms';
+    if (progress < 70) return 'Analyzing resilience capabilities';
+    if (progress < 80) return 'Evaluating third-party security';
+    if (progress < 90) return 'Generating compliance scores';
+    if (progress < 100) return 'Preparing recommendations';
+    return 'Assessment complete!';
+  };
   
   return (
     <div className="card processing-card">
@@ -91,7 +126,7 @@ const ProcessingScreen = () => {
       <div className="completed-steps">
         <h3>Completed Steps:</h3>
         <ul>
-          {processingStatus.completedSteps.map((step, index) => (
+          {completedSteps.map((step, index) => (
             <li key={index} className="completed-step">
               <i className="fas fa-check-circle"></i>
               <span>{step}</span>
@@ -106,126 +141,6 @@ const ProcessingScreen = () => {
       </div>
     </div>
   );
-};
-
-// Helper function to generate sample assessment results
-const generateSampleResults = (documents) => {
-  // Calculate a score based on the number and types of documents
-  const policyDocs = documents.filter(doc => doc.category === 'Policy').length;
-  const procedureDocs = documents.filter(doc => doc.category === 'Procedure').length;
-  const architectureDocs = documents.filter(doc => doc.category === 'Architecture').length;
-  const inventoryDocs = documents.filter(doc => doc.category === 'Inventory').length;
-  
-  // Base score between 35-55 depending on document count
-  const docScore = Math.min(55, 35 + (documents.length * 2));
-  
-  // Adjust score based on document types
-  let score = docScore;
-  if (policyDocs > 0) score += 5;
-  if (procedureDocs > 0) score += 5;
-  if (architectureDocs > 0) score += 5;
-  if (inventoryDocs > 0) score += 5;
-  
-  // Cap at 95
-  score = Math.min(95, score);
-  
-  // Generate domain scores
-  const domainScores = [
-    { domain: "Cybersecurity Governance", score: Math.min(100, score + getRandomInt(-10, 10)) },
-    { domain: "Cybersecurity Defense", score: Math.min(100, score + getRandomInt(-15, 5)) },
-    { domain: "Cybersecurity Resilience", score: Math.min(100, score + getRandomInt(-20, 0)) },
-    { domain: "Third-Party Cybersecurity", score: Math.min(100, score + getRandomInt(-25, -5)) }
-  ];
-  
-  // Generate findings
-  const findings = [];
-  
-  // Governance findings
-  if (policyDocs === 0) {
-    findings.push({
-      controlId: "1-1-1",
-      domain: "Cybersecurity Governance",
-      issue: "No OT/ICS cybersecurity policies found",
-      impact: "Critical",
-      recommendation: "Develop and implement comprehensive OT/ICS cybersecurity policies"
-    });
-  }
-  
-  findings.push({
-    controlId: "1-1-3",
-    domain: "Cybersecurity Governance",
-    issue: "No evidence of periodic review for OT/ICS policies",
-    impact: "High",
-    recommendation: "Establish a formal review process for OT/ICS cybersecurity policies"
-  });
-  
-  // Defense findings
-  if (architectureDocs === 0) {
-    findings.push({
-      controlId: "2-4-1",
-      domain: "Cybersecurity Defense",
-      issue: "No evidence of network segmentation for OT/ICS environment",
-      impact: "Critical",
-      recommendation: "Implement proper network segmentation between IT and OT networks"
-    });
-  }
-  
-  findings.push({
-    controlId: "2-11-1",
-    domain: "Cybersecurity Defense",
-    issue: "Insufficient cybersecurity event logs and audit trails",
-    impact: "High",
-    recommendation: "Implement comprehensive logging across all OT/ICS assets"
-  });
-  
-  // Third-party findings
-  findings.push({
-    controlId: "4-1-1",
-    domain: "Third-Party Cybersecurity",
-    issue: "No formal process for cybersecurity in OT/ICS procurement",
-    impact: "Medium",
-    recommendation: "Establish cybersecurity requirements for OT/ICS vendors"
-  });
-  
-  // Generate recommendations
-  const recommendations = [
-    {
-      title: "Implement Event Logging",
-      impact: "High",
-      effort: "Medium",
-      description: "Implement comprehensive logging across all OT/ICS assets and establish centralized monitoring.",
-      complianceImprovement: 15
-    },
-    {
-      title: "Develop Third-Party Security Program",
-      impact: "Medium",
-      effort: "Medium",
-      description: "Establish formal cybersecurity requirements for OT/ICS vendors and implement security assessments.",
-      complianceImprovement: 10
-    },
-    {
-      title: "Establish Policy Review Process",
-      impact: "Medium",
-      effort: "Low",
-      description: "Create a documented review cadence for all OT/ICS cybersecurity policies.",
-      complianceImprovement: 5
-    }
-  ];
-  
-  return {
-    overallScore: Math.round(score),
-    assessmentDate: new Date().toISOString(),
-    domainScores,
-    findings,
-    recommendations,
-    controlsAssessed: 10,
-    documentsAnalyzed: documents.length
-  };
-};
-
-// Helper function to get random integer in range
-const getRandomInt = (min, max) => {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
 };
 
 export default ProcessingScreen;

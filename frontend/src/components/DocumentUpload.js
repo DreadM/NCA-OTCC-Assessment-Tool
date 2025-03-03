@@ -10,9 +10,11 @@ const DocumentUpload = () => {
   
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
+    
+    // Create document objects with additional metadata
     const newDocuments = files.map(file => ({
       id: Date.now() + Math.random().toString(36).substr(2, 9),
-      file,
+      file, // Store the actual file object for upload
       name: file.name,
       size: file.size,
       type: file.type,
@@ -25,11 +27,13 @@ const DocumentUpload = () => {
   
   const guessDocumentCategory = (filename) => {
     const lowerFilename = filename.toLowerCase();
+    
     if (lowerFilename.includes('policy')) return 'Policy';
-    if (lowerFilename.includes('procedure')) return 'Procedure';
+    if (lowerFilename.includes('procedure') || lowerFilename.includes('process')) return 'Procedure';
     if (lowerFilename.includes('diagram') || lowerFilename.includes('arch')) return 'Architecture';
-    if (lowerFilename.includes('invent')) return 'Inventory';
-    if (lowerFilename.includes('log')) return 'Logs';
+    if (lowerFilename.includes('invent') || lowerFilename.includes('asset')) return 'Inventory';
+    if (lowerFilename.includes('log') || lowerFilename.includes('monitor')) return 'Logs';
+    
     return 'Other';
   };
   
@@ -96,7 +100,10 @@ const DocumentUpload = () => {
             {documents.map(doc => (
               <div className="table-row" key={doc.id}>
                 <div className="col-filename">
-                  <i className={`file-icon ${doc.type.includes('pdf') ? 'pdf' : 'doc'}`}></i>
+                  <i className={`file-icon ${doc.type.includes('pdf') ? 'pdf' : 
+                                              doc.type.includes('word') ? 'doc' : 
+                                              doc.type.includes('image') ? 'img' : 'doc'}`}>
+                  </i>
                   {doc.name}
                 </div>
                 <div className="col-category">
@@ -130,7 +137,7 @@ const DocumentUpload = () => {
           <div className="form-actions">
             <button 
               className="btn btn-secondary"
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/facilities')}
             >
               Back
             </button>
@@ -149,7 +156,7 @@ const DocumentUpload = () => {
         <div className="form-actions">
           <button 
             className="btn btn-secondary"
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/facilities')}
           >
             Back
           </button>

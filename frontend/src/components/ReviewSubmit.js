@@ -1,4 +1,4 @@
-// src/components/ReviewSubmit.js
+// src/components/ReviewSubmit.js - Real API submission
 import React, { useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CompanyContext } from '../contexts/CompanyContext';
@@ -6,19 +6,129 @@ import { CompanyContext } from '../contexts/CompanyContext';
 const ReviewSubmit = () => {
   const { companyInfo, facilities, documents, setProcessingStatus } = useContext(CompanyContext);
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
   const navigate = useNavigate();
   
-  const handleSubmit = () => {
-    // Initialize processing status
-    setProcessingStatus({
-      isProcessing: true,
-      progress: 0,
-      status: 'Initializing assessment...',
-      completedSteps: []
-    });
+  const handleSubmit = async () => {
+    if (isSubmitting) return;
     
-    // Navigate to processing screen
-    navigate('/processing');
+    setIsSubmitting(true);
+    setSubmitError(null);
+    
+    try {
+      // Initialize processing status
+      setProcessingStatus({
+        isProcessing: true,
+        progress: 0,
+        status: 'Initializing assessment...',
+        completedSteps: []
+      });
+      
+      console.log('Starting assessment submission process');
+      
+      // 1. Create a company record
+      console.log('Creating company record:', companyInfo);
+      const companyResponse = await fetch('http://localhost:5001/api/company', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(companyInfo),
+      });
+      
+      if (!companyResponse.ok) {
+        throw new Error('Failed to create company record');
+      }
+      
+      const companyData = await companyResponse.json();
+      const companyId = companyData.id;
+      console.log('Company created with ID:', companyId);
+      
+      // 2. Add facilities
+      console.log('Adding facilities:', facilities.length);
+      for (const facility of facilities) {
+        const facilityData = {
+          ...facility,
+          companyId
+        };
+        
+        const facilityResponse = await fetch('http://localhost:5001/api/facility', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(facilityData),
+        });
+        
+        if (!facilityResponse.ok) {
+          throw new Error('Failed to create facility record');
+        }
+      }
+      
+      // 3. Upload documents
+      console.log('Uploading documents:', documents.length);
+      const formData = new FormData();
+      formData.append('companyId', companyId);
+      
+      for (const doc of documents) {
+        formData.append('documents', doc.file);
+        // Add category metadata
+        formData.append(`categories[${doc.id}]`, doc.category);
+      }
+      
+      const uploadResponse = await fetch('http://localhost:5001/api/document/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!uploadResponse.ok) {
+        throw new Error('Failed to upload documents');
+      }
+      
+      const uploadedDocs = await uploadResponse.json();
+      console.log('Documents uploaded:', uploadedDocs.length);
+      
+      // 4. Start assessment
+      console.log('Starting assessment with documents:', uploadedDocs.map(d => d.id));
+      const assessmentResponse = await fetch('http://localhost:5001/api/assessment/start', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          companyId,
+          documents: uploadedDocs.map(doc => doc.id)
+        }),
+      });
+      
+      if (!assessmentResponse.ok) {
+        throw new Error('Failed to start assessment');
+      }
+      
+      const assessmentData = await assessmentResponse.json();
+      const assessmentId = assessmentData.assessmentId;
+      
+      console.log('Assessment started with ID:', assessmentId);
+      localStorage.setItem('currentAssessmentId', assessmentId);
+      
+      // Navigate to processing screen
+      navigate('/processing');
+      
+    } catch (error) {
+      console.error('Error submitting assessment:', error);
+      setSubmitError(error.message);
+      
+      // Reset processing status
+      setProcessingStatus({
+        isProcessing: false,
+        progress: 0,
+        status: '',
+        completedSteps: []
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   
   return (
@@ -104,6 +214,13 @@ const ReviewSubmit = () => {
         )}
       </div>
       
+      {submitError && (
+        <div className="error-box">
+          <i className="fas fa-exclamation-circle"></i>
+          <p>Error: {submitError}</p>
+        </div>
+      )}
+      
       <div className="terms-section">
         <div className="checkbox-group">
           <input 
@@ -123,15 +240,16 @@ const ReviewSubmit = () => {
         <button 
           className="btn btn-secondary"
           onClick={() => navigate('/documents')}
+          disabled={isSubmitting}
         >
           Back
         </button>
         <button 
           className="btn btn-primary"
           onClick={handleSubmit}
-          disabled={!termsAccepted}
+          disabled={!termsAccepted || isSubmitting}
         >
-          Submit for Assessment
+          {isSubmitting ? 'Submitting...' : 'Submit for Assessment'}
         </button>
       </div>
     </div>
