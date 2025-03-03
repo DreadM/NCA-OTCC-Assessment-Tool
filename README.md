@@ -84,7 +84,7 @@ npm install
 
 ```bash
 cd backend
-npm run dev or node server.js
+npm run dev # or node server.js
 ```
 
 ### 2. Start the frontend application
