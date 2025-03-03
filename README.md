@@ -128,7 +128,8 @@ For a production implementation, consider:
 - Adding integration with OT scanning tools
 
 ## Refrence
-    - https://nca.gov.sa/en/regulatory-documents/controls-list/195/
+
+https://nca.gov.sa/en/regulatory-documents/controls-list/195/
 
 ## Contact
 
