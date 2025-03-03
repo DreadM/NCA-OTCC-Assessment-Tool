@@ -127,6 +127,9 @@ For a production implementation, consider:
 - Enhancing document analysis with more sophisticated NLP techniques
 - Adding integration with OT scanning tools
 
+## Refrence
+    - https://nca.gov.sa/en/regulatory-documents/controls-list/195/
+
 ## Contact
 
 You can reach out to me via LinkedIn: www.linkedin.com/in/muath-alhayani-47650a16b
